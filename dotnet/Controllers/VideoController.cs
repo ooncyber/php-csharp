@@ -15,8 +15,11 @@ namespace dotnet.Controllers
         [HttpGet]
         public IActionResult Get()
         {
+            enviar(@"arquivos\001 Introduc227o.mp4");
             return Ok("ok");
         }
+
+        public string _pathFinal = "";
 
         [HttpPost, DisableRequestSizeLimit]
         public ActionResult Post([FromForm] IFormFile file)
@@ -30,14 +33,24 @@ namespace dotnet.Controllers
                 Directory.CreateDirectory(arquivoPath);
             var pathFinal = Path.Combine(arquivoPath, file.FileName);
             FileStream fileStream = new FileStream(pathFinal, FileMode.Create);
-            file.CopyTo(fileStream);
+            file.CopyToAsync(fileStream);
+            _pathFinal = pathFinal;
+            fileStream.Close();
+            enviar(pathFinal);
             return Ok(new {resultado = "OK", file= pathFinal});
+
 
         }
 
-        public void enviar(){
+        public void enviar(string path){
             WebClient c = new WebClient();
-            // c.UploadFile("http://localhst:80", arq.FileName);
+            WebProxy p = new WebProxy("172.16.0.1",true);
+            p.Credentials = new NetworkCredential("2840481821010", "block");
+            WebRequest.DefaultWebProxy = p;
+            byte[] rawResponse = c.UploadFile("http://localhost", path);
+            Console.WriteLine("Remote Response: {0}", System.Text.Encoding.ASCII.GetString(rawResponse));
+            System.IO.File.Delete(path);
+
         }
     }
 }
